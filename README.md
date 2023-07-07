@@ -56,3 +56,33 @@ G4S can be tested for performance using deepmd, citcoms and cantera. Since G4S d
     [G4S] cd $citcoms_dir/examples/Cookbook2
     [G4S] CitcomSRegional cookbook2
 ```
+
+## Data Description
+
+### deepMD-kit
+    deepMD-kit is a toolkit for molecular dynamics simulation and machine learning. It includes pre-trained models and example datasets.
+#### water
+The Water dataset is a collection of data used to describe the water molecule system. It includes a series of atomic coordinates and corresponding information such as energy and force fields. This dataset can be utilized for training and testing molecular models based on deep learning methods. It provides a representative structure of a small molecule system, making it suitable for fast algorithm verification and model validation.
+#### cuprum
+The Cuprum dataset is a collection of data used to describe the copper metal system. It includes a series of atomic coordinates, lattice constants, and corresponding energy information. This dataset can be used for training and testing molecular models based on deep learning methods. It provides a representative structure of a metal system, making it suitable for studying the properties and behavior of copper metal.
+#### Fe-H 
+The Fe-H dataset is a collection of data used to describe the iron-hydrogen system. It includes a series of atomic coordinates, lattice constants, and corresponding energy information. This dataset can be utilized for training and testing molecular models based on deep learning methods. It provides a representative structure of metal-hydrogen atomic interactions, making it suitable for studying the properties and interactions of iron-hydrogen systems.
+
+## citcoms
+CitcomS is a finite element code designed to solve compressible thermochemical convection problems relevant to Earth's mantle.
+### CookBook 1
+This example solves for thermal convection within a full spherical shell domain.  The full spherical version of CitcomS.py is designed to run on a cluster that decomposes the spherical shell into 12 equal “caps” and then distributes the calculation for caps onto separate processors.  To run CitcomS.py with the full solver parameter set, it is recommended that you have a minimum of 12 processors available on your cluster.
+### CookBook 2
+This example solves for thermal convection with velocity boundary conditions imposed on the top surface within a given region of a sphere. This requires using the regional version of CitcomS.py.
+This model allows you to create a plate-driven convection in which there is a thermal upwelling on one wall, a thermal downwelling on another, and uniform horizontal velocity across the top. The downwelling is not exactly subduction because the default boundary conditions are close to zero shear stress on the boundaries. This means that there is a symmetrical downwelling in a vertical domain on the other side.
+
+### CookBook 3
+
+A common problem in geophysics is the exploration of natural convection
+in the presence of variable viscosity, including temperature-dependent
+or stress-dependent viscosity.
+
+## cantera
+
+### NonIdealShockTube
+The NonIdealShockTube.py dataset serves as a valuable resource for simulating non-ideal shock tube experiments. Utilizing the power of the Cantera software library, this dataset employs numerical simulations to investigate the intricate gas dynamics within such experiments. By delving into critical phenomena like shock propagation, reactions, and energy conversion, researchers gain a deeper understanding of non-ideal shock tube behavior.
