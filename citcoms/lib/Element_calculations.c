@@ -34,7 +34,6 @@
 #include "element_definitions.h"
 #include "global_defs.h"
 #include "material_properties.h"
-#include "graph.h"
 
 /* else, PGI would complain */
 void construct_side_c3x3matrix_el(struct All_variables *,int ,
@@ -446,96 +445,32 @@ void assemble_del2_u(E,u,Au,level,strip_bcs)
 /* ======================================
    Assemble del_squared_u vector el by el
    ======================================   */
-void citcoms(int m,int n,double **Au,
-    struct All_variables *E,
-    int level,int m_caps_per_proc,double **u
-){
-    for(int e=1;e<=m;e++){
-        for(int j=0;j<n;j++){
-
-            const int ends=enodes[E->mesh.nsd];
-            int a = (int)j/ends + 1;// 从1到ends
-            int b = (int)j%ends + 1;//从1到ends
-            const int dims=E->mesh.nsd;
-            
-            int ii = E->IEN[level][m_caps_per_proc][e].node[a];
-            int a1 = E->ID[level][m_caps_per_proc][ii].doff[1];
-            int a2 = E->ID[level][m_caps_per_proc][ii].doff[2];
-            int a3 = E->ID[level][m_caps_per_proc][ii].doff[3];
-
-            int nodeb = E->IEN[level][m_caps_per_proc][e].node[b];
-
-            ii = (a*24+b)*dims-(dims*24+dims);
-
-		Au[m_caps_per_proc][a1] +=
-		        E->elt_k[level][m_caps_per_proc][e][ii] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[1]]
-		      + E->elt_k[level][m_caps_per_proc][e][ii+1] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[2]]
-		      + E->elt_k[level][m_caps_per_proc][e][ii+2] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[3]];
-		/* i=2, j=1,2,3 */
-		Au[m_caps_per_proc][a2] +=
-		        E->elt_k[level][m_caps_per_proc][e][ii+n] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[1]]
-		      + E->elt_k[level][m_caps_per_proc][e][ii+n+1] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[2]]
-		      + E->elt_k[level][m_caps_per_proc][e][ii+n+2] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[3]];
-		/* i=3, j=1,2,3 */
-		Au[m_caps_per_proc][a3] +=
-		        E->elt_k[level][m_caps_per_proc][e][ii+n+n] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[1]]
-		      + E->elt_k[level][m_caps_per_proc][e][ii+n+n+1] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[2]]
-		      + E->elt_k[level][m_caps_per_proc][e][ii+n+n+2] *
-			u[m_caps_per_proc][E->ID[level][m_caps_per_proc][nodeb].doff[3]];
-        }
-    }
-}
-
-// 全局
 
 struct All_variables *tempE = NULL;
 int tempM = 1;
 int tempLevel = 0;
 
-void gather(int e, int a, struct Graph* graph, double * u){
+void gather(int e, int a, const double** elt_k, const double* u, double* Au){
   const int n=loc_mat_size[tempE->mesh.nsd];
   const int ends=enodes[tempE->mesh.nsd];
   const int dims=tempE->mesh.nsd;
 
   a = a+1;
   e = e+1;
-
   int index = tempE->IEN[tempLevel][tempM][e].node[a];
-  // int base = (a-1) * n * dims;
   for(int i = 1; i <=3; ++i){
     int aa = tempE->ID[tempLevel][tempM][index].doff[i];
     for(int b = 1; b <= ends; b+=1){
       int ii = (a*n+b)*dims-(dims*n+dims) + (i-1)*n;
-      int uindex = (b-1)*3;
-      graph->temp[aa] += graph->edgeWeight[e][ii] * u[uindex]
-                        +graph->edgeWeight[e][ii+1] * u[uindex+1]
-                        +graph->edgeWeight[e][ii+2] * u[uindex+2];
+      int nodeb = tempE->IEN[tempLevel][tempM][e].node[b];
+      Au[aa] += elt_k[e][ii] * u[tempE->ID[tempLevel][tempM][nodeb].doff[1]]
+                +elt_k[e][ii+1] * u[tempE->ID[tempLevel][tempM][nodeb].doff[2]]
+                +elt_k[e][ii+2] * u[tempE->ID[tempLevel][tempM][nodeb].doff[3]];
     }
   }
 }
 
-void apply(int e, struct Graph *graph, double *Au){
-  e = e+1;
-  const int ends=enodes[tempE->mesh.nsd];
-  for(int a = 1; a <= ends; ++a){
-    int ii = tempE->IEN[tempLevel][tempM][e].node[a];
-    int a1 = tempE->ID[tempLevel][tempM][ii].doff[1];
-    int a2 = tempE->ID[tempLevel][tempM][ii].doff[2];
-    int a3 = tempE->ID[tempLevel][tempM][ii].doff[3];
-    int tmp = (a-1)*3;
-    Au[a1] = graph->temp[a1];
-    Au[a2] = graph->temp[a2];
-    Au[a3] = graph->temp[a3];
-  }
-}
+void apply(int e, const double** elt_k, const double *u, double* Au){}
 
 void e_assemble_del2_u(E,u,Au,level,strip_bcs)
   struct All_variables *E;
@@ -561,13 +496,8 @@ void e_assemble_del2_u(E,u,Au,level,strip_bcs)
       Au[m][i] = 0.0;
 
       tempM = m;
-      struct Graph graph;
-      graph.numNodes = nel;
-      graph.degree = ends;
-      graph.edgeWeight = E->elt_k[level][m];
-      graph.states = u[m];
-      graph.temp = Au[m];
-      GraphProcess(&graph, Au[m], gather, apply);
+      double time = 0;
+      E->spmm_dense(nel, ends, E->elt_k[level][m], u[m], Au[m], Au[m], gather, apply, &time, 1);
   }/* end for m  */
   
   (E->solver.exchange_id_d)(E, Au, level);

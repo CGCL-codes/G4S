@@ -45,6 +45,8 @@ to functions across the whole filespace of CITCOM.
 #include <stdlib.h>
 #include "mpi.h"
 
+typedef void (*fun_gather)(int, int, const double**, const double*, double*);
+typedef void (*fun_apply)(int, const double**, const double*, double *);
 
 
 #ifdef USE_HDF5
@@ -849,7 +851,11 @@ struct All_variables {
 
     /* function pointer for choosing between various output routines */
     void (* problem_output)(struct All_variables *, int);
-
+    void (* spmm_dense)(u_int32_t numNodes, u_int32_t degree, const double** edgeWeight,
+      const double* vertexStates, double* temp, double* result,
+      fun_gather gather,
+      fun_apply apply, double* time, int threadNum);
+      
   /* the following function pointers are for exchanger */
   void (* exchange_node_d)(struct All_variables *, double**, int);
   void (* exchange_node_f)(struct All_variables *, float**, int);

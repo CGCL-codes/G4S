@@ -140,7 +140,6 @@ sources = \
 	Regional_sphere_related.c \
 	Regional_tracer_advection.c \
 	Regional_version_dependent.c \
-	graph.c \
 	$(CUDA_SOURCES)
 
 EXTRA_DIST = \
