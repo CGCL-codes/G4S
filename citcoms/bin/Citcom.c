@@ -42,6 +42,11 @@ extern int Emergency_stop;
 
 void solver_init(struct All_variables *E);
 
+void spmm_dense(u_int32_t numNodes, u_int32_t degree, const double** edgeWeight,
+    const double* vertexStates, double* temp, double* result,
+    fun_gather gather,
+    fun_apply apply, double* time, int threadNum);
+
 int main(argc,argv)
      int argc;
      char **argv;
@@ -85,6 +90,7 @@ int main(argc,argv)
    * CitcomS.Solver.initialize() in Pyre. */
   world = MPI_COMM_WORLD;
   E = citcom_init(&world); /* allocate global E and do initializaion here */
+  E->spmm_dense = spmm_dense;
 
   /* define common aliases for full/regional functions */
   solver_init(E);
